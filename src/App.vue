@@ -8,6 +8,7 @@ const isLoading = ref(false);
 const storeConversations = ref([]);
 const typingMessage = ref("");
 const textarea = ref(null);
+const errorMessage = ref("");
 
 const autoResize = () => {
   const el = textarea.value;
@@ -82,7 +83,7 @@ const getMessage = async () => {
 
     typeNextChar();
   } catch (error) {
-    console.error("Error fetching from OpenRouter:", error);
+    errorMessage.value = `Error:  ${error.message}`;
   } finally {
     isLoading.value = false;
   }
@@ -100,9 +101,16 @@ watch(message, autoResize);
     <div>
       <div class="flex justify-center items-center">
         <div
-          class="text-gray-800 font-semibold border rounded-full border-gray-200 py-2 px-4 my-10 text-sm text-center"
+          class="text-gray-800 font-semibold border rounded-full border-gray-200 py-2 px-4 mt-10 text-sm text-center"
         >
           John Michael D. Echemani
+        </div>
+      </div>
+      <div v-if="errorMessage" class="flex justify-center items-center">
+        <div
+          class="text-red-500 border rounded-full bg-red-100/50 border-red-200 py-2 px-4 my-2 text-sm text-center"
+        >
+          {{ errorMessage }}
         </div>
       </div>
       <div class="my-10 w-screen">
@@ -115,7 +123,7 @@ watch(message, autoResize);
             </div>
             <div class="max-h-[60vh] overflow-y-auto">
               <div
-                class="flex-1 px-2 py-6 bg-gray-50/30 border-x border-gray-200"
+                class="flex-1 px-2 py-6 bg-gray-50/20 border-x border-gray-200"
               >
                 <div
                   v-for="(msg, index) in storeConversations"
