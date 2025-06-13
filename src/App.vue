@@ -166,6 +166,7 @@ watch(message, autoResize);
                 v-model="message"
                 type="text"
                 ref="textarea"
+                @keydown.enter.exact.prevent="getMessage"
                 @input="autoResize"
                 class="rounded w-full placeholder:text-sm resize-none outline-none text-sm"
                 placeholder="Ask me something..."
