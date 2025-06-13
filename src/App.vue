@@ -49,12 +49,6 @@ const getMessage = async () => {
                   type: "text",
                   text: userInput,
                 },
-                // {
-                //   type: "image_url",
-                //   image_url: {
-                //     url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
-                //   },
-                // },
               ],
             },
           ],
@@ -118,7 +112,7 @@ watch(message, autoResize);
           <div class="flex flex-col w-full max-w-4xl">
             <div class="text-gray-800 text-xs mb-1.5 font-semibold">
               <span class="border p-1 rounded-r-full border-gray-200 italic"
-                >Gemini 2.0 Flash</span
+                >Model: Gemini 2.0 Flash</span
               >
             </div>
             <div class="max-h-[60vh] overflow-y-auto">
@@ -172,6 +166,7 @@ watch(message, autoResize);
             <div class="mt-4 mx-4 flex justify-center gap-2 items-center">
               <textarea
                 v-model="message"
+                name="message"
                 type="text"
                 ref="textarea"
                 @keydown.enter.exact.prevent="getMessage"
