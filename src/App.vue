@@ -5,11 +5,12 @@ import { Icon } from "@iconify/vue";
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const message = ref("Hello, Gemini!");
 const isLoading = ref(false);
-const storeUserMessagesInLocalStorage = ref([]);
+const storeConversations = ref([]);
+const typingMessage = ref("");
 
 const getMessage = async () => {
   if (!message.value.trim()) return;
-  storeUserMessagesInLocalStorage.value.push({
+  storeConversations.value.push({
     sender: "me",
     text: message.value,
   });
@@ -50,10 +51,24 @@ const getMessage = async () => {
 
     const data = await response.json();
     const responseMessage = data.choices[0].message.content;
-    storeUserMessagesInLocalStorage.value.push({
-      sender: "gemini",
-      text: responseMessage,
-    });
+    typingMessage.value = "";
+
+    let i = 0;
+    const typeNextChar = () => {
+      if (i < responseMessage.length) {
+        typingMessage.value += responseMessage[i];
+        i++;
+        setTimeout(typeNextChar, 15);
+      } else {
+        storeConversations.value.push({
+          sender: "gemini",
+          text: typingMessage.value,
+        });
+        typingMessage.value = "";
+      }
+    };
+
+    typeNextChar();
   } catch (error) {
     console.error("Error fetching from OpenRouter:", error);
   } finally {
@@ -89,45 +104,56 @@ watch(message, autoResize);
         </div>
       </div>
       <div class="my-10 w-screen">
-        <div class="px-20 flex justify-center items-center">
+        <div class="md:px-20 flex justify-center items-center">
           <div class="flex flex-col w-full max-w-4xl">
-            <div class="text-gray-800 text-xs font-semibold">
+            <div class="text-gray-800 text-xs mb-1.5 font-semibold">
               <span class="border p-1 rounded-r-full border-gray-200 italic"
                 >Gemini 2.0 Flash</span
               >
             </div>
-            <div
-              class="flex-1 overflow-y-auto px-2 py-6 bg-gray-50/30 border-x border-gray-200"
-            >
-              <div v-if="isLoading" class="w-full flex">
-                <span class="border px-1 rounded-full border-gray-200">
-                  <Icon
-                    icon="eos-icons:three-dots-loading"
-                    width="20"
-                    height="20"
-                  />
-                </span>
-              </div>
+            <div class="max-h-[60vh] overflow-y-auto">
               <div
-                v-for="(msg, index) in storeUserMessagesInLocalStorage"
-                :key="index"
-                :class="msg.sender === 'me' ? 'text-right' : 'text-left'"
+                class="flex-1 px-2 py-6 bg-gray-50/30 border-x border-gray-200"
               >
                 <div
-                  :class="[
-                    'inline-block px-4 py-2 rounded-xl max-w-xs break-words text-sm',
-                    msg.sender === 'me'
-                      ? 'bg-blue-500 text-white rounded-br-none ml-auto'
-                      : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
-                  ]"
+                  v-for="(msg, index) in storeConversations"
+                  :key="index"
+                  :class="msg.sender === 'me' ? 'text-right' : 'text-left'"
                 >
-                  {{ msg.text }}
+                  <div
+                    :class="[
+                      'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
+                      msg.sender === 'me'
+                        ? 'bg-gray-800 text-white rounded-br-none ml-auto'
+                        : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
+                    ]"
+                  >
+                    {{ msg.text }}
+                  </div>
+                </div>
+                <div v-if="typingMessage" class="text-left">
+                  <div
+                    class="inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none"
+                  >
+                    {{ typingMessage }}
+                    <span class="animate-pulse">|</span>
+                  </div>
+                </div>
+
+                <div v-if="isLoading" class="w-full flex">
+                  <span class="border px-1 rounded-full border-gray-200">
+                    <Icon
+                      icon="eos-icons:three-dots-loading"
+                      width="20"
+                      height="20"
+                    />
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="my-5 px-20 flex justify-center items-center">
+        <div class="my-5 md:px-20 flex justify-center items-center">
           <form
             action=""
             @submit.prevent="getMessage"
@@ -143,13 +169,23 @@ watch(message, autoResize);
                 placeholder="Ask me something..."
               />
             </div>
-            <div class="flex justify-end items-center px-2 pb-2">
-              <button
-                type="submit"
-                class="text-gray-800 rounded-full border border-gray-200 p-1"
-              >
-                <Icon icon="lets-icons:send-duotone" width="30" height="30" />
-              </button>
+            <div class="flex justify-between items-center">
+              <div class="text-xs text-gray-500 p-4">
+                <div
+                  class="border border-gray-200 py-1 px-2 rounded-xl lg:rounded-full"
+                >
+                  This model can't remember past conversations, so each time you
+                  ask a question, it will be treated as a new conversation.
+                </div>
+              </div>
+              <div class="flex justify-end items-center px-2 pb-2">
+                <button
+                  type="submit"
+                  class="text-gray-800 rounded-full border border-gray-200 p-1"
+                >
+                  <Icon icon="lets-icons:send-duotone" width="30" height="30" />
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -158,4 +194,18 @@ watch(message, autoResize);
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.animate-pulse {
+  animation: pulse 1s steps(2, start) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+</style>
