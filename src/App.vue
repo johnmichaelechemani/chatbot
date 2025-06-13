@@ -6,13 +6,17 @@ import ErrorMessage from "./components/ErrorMessage.vue";
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const message = ref("Hello, Gemini!");
 const imageURL = ref("");
-const fileInput = ref(null);
+const newImageURL = ref("");
 
 const isLoading = ref(false);
+const showUrlInput = ref(false);
 const storeConversations = ref([]);
 const typingMessage = ref("");
 const textarea = ref(null);
 const errorMessage = ref("");
+
+const isValidImageUrl = (url) =>
+  /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
 
 const autoResize = () => {
   const el = textarea.value;
@@ -22,33 +26,34 @@ const autoResize = () => {
   }
 };
 
-const content = [
-  {
-    type: "text",
-    text: message.value,
-  },
-];
-
-if (imageURL.value) {
-  content.push({
-    type: "image_url",
-    image_url: {
-      url: imageURL.value,
-    },
-  });
-}
-
 const getMessage = async () => {
-  if (!message.value.trim()) return;
+  if (!message.value.trim() && !imageURL.value) return;
 
   storeConversations.value.push({
     sender: "me",
     text: message.value,
     image: imageURL.value,
   });
-  message.value = "";
-  isLoading.value = true;
 
+  const content = [
+    {
+      type: "text",
+      text: message.value,
+    },
+  ];
+
+  if (imageURL.value && isValidImageUrl(imageURL.value)) {
+    content.push({
+      type: "image_url",
+      image_url: {
+        url: imageURL.value,
+      },
+    });
+  }
+
+  isLoading.value = true;
+  message.value = "";
+  imageURL.value = "";
   try {
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -103,23 +108,28 @@ const getMessage = async () => {
 };
 
 const triggerImageInput = () => {
-  fileInput.value?.click();
-};
-
-const handleImageUpload = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    imageURL.value = URL.createObjectURL(file);
-  }
+  showUrlInput.value = true;
 };
 
 const removeImage = () => {
   imageURL.value = "";
 };
+const clearImageUrl = () => {
+  newImageURL.value = "";
+  showUrlInput.value = false;
+};
+
+const addImageUrl = () => {
+  if (newImageURL.value.trim()) {
+    imageURL.value = newImageURL.value.trim();
+    newImageURL.value = "";
+    showUrlInput.value = false;
+  }
+};
 
 onMounted(() => {
   getMessage();
-  autoResize;
+  autoResize();
 });
 watch(message, autoResize);
 </script>
@@ -153,6 +163,7 @@ watch(message, autoResize);
                   :class="msg.sender === 'me' ? 'text-right' : 'text-left'"
                 >
                   <div
+                    v-if="msg.text && !msg.image"
                     :class="[
                       'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
                       msg.sender === 'me'
@@ -161,6 +172,30 @@ watch(message, autoResize);
                     ]"
                   >
                     {{ msg.text }}
+                  </div>
+                  <div
+                    v-else
+                    class="inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm"
+                  >
+                    <div
+                      class="p-0 size-14 border overflow-hidden border-gray-200 rounded-2xl"
+                    >
+                      <img
+                        :src="msg.image"
+                        alt="image attachment"
+                        class="rounded-2xl content-center object-cover w-full h-full"
+                      />
+                    </div>
+                    <div
+                      :class="[
+                        'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
+                        msg.sender === 'me'
+                          ? 'bg-gray-800 text-white rounded-br-none text-left ml-auto'
+                          : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
+                      ]"
+                    >
+                      {{ msg.text }}
+                    </div>
                   </div>
                 </div>
                 <div v-if="typingMessage" class="text-left">
@@ -193,7 +228,7 @@ watch(message, autoResize);
           >
             <div
               v-if="imageURL"
-              class="m-4 size-18 border border-gray-200 rounded-2xl relative"
+              class="m-4 size-18 border overflow-hidden border-gray-200 rounded-2xl relative"
             >
               <button
                 type="button"
@@ -202,8 +237,51 @@ watch(message, autoResize);
               >
                 <Icon icon="ic:round-close" width="18" height="18" />
               </button>
-              <img :src="imageURL" alt="image attachment" class="rounded-2xl" />
+              <img
+                :src="imageURL"
+                alt="image attachment"
+                class="rounded-2xl content-center object-cover w-full h-full"
+              />
             </div>
+
+            <div v-if="showUrlInput" class="flex gap-1 mr-4 my-4">
+              <div
+                class="ml-4 border rounded-full w-full"
+                :class="[
+                  isValidImageUrl(newImageURL)
+                    ? 'border-gray-200'
+                    : 'border-gray-100',
+                ]"
+              >
+                <input
+                  type="url"
+                  v-model="newImageURL"
+                  placeholder="Paste image URL (https://...)"
+                  class="w-full text-sm outline-none rounded-full pl-3 py-2"
+                />
+              </div>
+              <button
+                type="button"
+                @click="addImageUrl"
+                :class="[
+                  'rounded-full border p-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+                  newImageURL.trim() && isValidImageUrl(newImageURL)
+                    ? 'bg-gray-800 text-white border-black'
+                    : 'bg-white text-gray-800 border-gray-200',
+                ]"
+                :disabled="!newImageURL.trim() || !isValidImageUrl(newImageURL)"
+              >
+                <Icon icon="ic:round-add" width="20" height="20" />
+              </button>
+              <button
+                type="button"
+                @click="clearImageUrl"
+                class="bg-white border hover:transition-colors hover:bg-gray-800 hover:text-white border-gray-200 p-2 rounded-full"
+              >
+                <Icon icon="ic:round-close" width="18" height="18" />
+              </button>
+            </div>
+
             <div class="mt-4 mx-4 flex justify-center gap-2 items-center">
               <textarea
                 v-model="message"
@@ -237,23 +315,16 @@ watch(message, autoResize);
                     height="30"
                   />
                 </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref="fileInput"
-                  class="hidden"
-                  @change="handleImageUpload"
-                />
+
                 <button
                   type="submit"
                   :class="[
-                    'rounded-full border p-1 transition-colors duration-200',
+                    'rounded-full border p-1 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
                     message.trim() || imageURL
                       ? 'bg-gray-800 text-white border-black'
                       : 'bg-white text-gray-800 border-gray-200',
                   ]"
                   :disabled="!message.trim() && !imageURL"
-                  class="disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Icon icon="lets-icons:send-duotone" width="30" height="30" />
                 </button>
