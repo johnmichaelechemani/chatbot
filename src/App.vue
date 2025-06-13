@@ -1,9 +1,11 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
+import ErrorMessage from "./components/ErrorMessage.vue";
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const message = ref("Hello, Gemini!");
+const imageURL = ref("");
 const isLoading = ref(false);
 const storeConversations = ref([]);
 const typingMessage = ref("");
@@ -48,6 +50,12 @@ const getMessage = async () => {
                 {
                   type: "text",
                   text: userInput,
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: imageURL,
+                  },
                 },
               ],
             },
@@ -100,13 +108,7 @@ watch(message, autoResize);
           John Michael D. Echemani
         </div>
       </div>
-      <div v-if="errorMessage" class="flex justify-center items-center">
-        <div
-          class="text-red-500 border rounded-full bg-red-100/50 border-red-200 py-2 px-4 my-2 text-sm text-center"
-        >
-          {{ errorMessage }}
-        </div>
-      </div>
+      <ErrorMessage v-if="errorMessage" :errorMessage="errorMessage" />
       <div class="my-10 w-screen">
         <div class="md:px-20 flex justify-center items-center">
           <div class="flex flex-col w-full max-w-4xl">
@@ -184,7 +186,17 @@ watch(message, autoResize);
                   ask a question, it will be treated as a new conversation.
                 </div>
               </div>
-              <div class="flex justify-end items-center px-2 pb-2">
+              <div class="flex justify-end items-center px-2 pb-2 gap-1">
+                <button
+                  type="button"
+                  class="p-1 transition-colors duration-200 bg-white text-gray-700"
+                >
+                  <Icon
+                    icon="stash:image-arrow-up-duotone"
+                    width="30"
+                    height="30"
+                  />
+                </button>
                 <button
                   type="submit"
                   :class="[
