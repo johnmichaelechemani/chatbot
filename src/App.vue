@@ -6,6 +6,8 @@ import ErrorMessage from "./components/ErrorMessage.vue";
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const message = ref("Hello, Gemini!");
 const imageURL = ref("");
+const fileInput = ref(null);
+
 const isLoading = ref(false);
 const storeConversations = ref([]);
 const typingMessage = ref("");
@@ -20,15 +22,30 @@ const autoResize = () => {
   }
 };
 
+const content = [
+  {
+    type: "text",
+    text: message.value,
+  },
+];
+
+if (imageURL.value) {
+  content.push({
+    type: "image_url",
+    image_url: {
+      url: imageURL.value,
+    },
+  });
+}
+
 const getMessage = async () => {
   if (!message.value.trim()) return;
 
   storeConversations.value.push({
     sender: "me",
     text: message.value,
+    image: imageURL.value,
   });
-
-  const userInput = message.value;
   message.value = "";
   isLoading.value = true;
 
@@ -46,18 +63,7 @@ const getMessage = async () => {
           messages: [
             {
               role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: userInput,
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: imageURL,
-                  },
-                },
-              ],
+              content,
             },
           ],
         }),
@@ -65,6 +71,11 @@ const getMessage = async () => {
     );
 
     const data = await response.json();
+
+    if (!data.choices || !data.choices[0]) {
+      throw new Error("No response from model");
+    }
+
     const responseMessage = data.choices[0].message.content;
     typingMessage.value = "";
 
@@ -89,6 +100,21 @@ const getMessage = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const triggerImageInput = () => {
+  fileInput.value?.click();
+};
+
+const handleImageUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    imageURL.value = URL.createObjectURL(file);
+  }
+};
+
+const removeImage = () => {
+  imageURL.value = "";
 };
 
 onMounted(() => {
@@ -165,6 +191,19 @@ watch(message, autoResize);
             @submit.prevent="getMessage"
             class="border w-4xl rounded-4xl border-gray-200"
           >
+            <div
+              v-if="imageURL"
+              class="m-4 size-18 border border-gray-200 rounded-2xl relative"
+            >
+              <button
+                type="button"
+                @click="removeImage"
+                class="absolute top-1 right-1 bg-white border border-gray-200 rounded-full"
+              >
+                <Icon icon="ic:round-close" width="18" height="18" />
+              </button>
+              <img :src="imageURL" alt="image attachment" class="rounded-2xl" />
+            </div>
             <div class="mt-4 mx-4 flex justify-center gap-2 items-center">
               <textarea
                 v-model="message"
@@ -189,7 +228,8 @@ watch(message, autoResize);
               <div class="flex justify-end items-center px-2 pb-2 gap-1">
                 <button
                   type="button"
-                  class="p-1 transition-colors duration-200 bg-white text-gray-700"
+                  @click="triggerImageInput"
+                  class="p-1 hover:transition-colors hover:bg-gray-800 hover:text-white rounded-full duration-200 bg-white text-gray-700"
                 >
                   <Icon
                     icon="stash:image-arrow-up-duotone"
@@ -197,15 +237,22 @@ watch(message, autoResize);
                     height="30"
                   />
                 </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref="fileInput"
+                  class="hidden"
+                  @change="handleImageUpload"
+                />
                 <button
                   type="submit"
                   :class="[
                     'rounded-full border p-1 transition-colors duration-200',
-                    message.trim()
+                    message.trim() || imageURL
                       ? 'bg-gray-800 text-white border-black'
                       : 'bg-white text-gray-800 border-gray-200',
                   ]"
-                  :disabled="!message.trim()"
+                  :disabled="!message.trim() && !imageURL"
                   class="disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Icon icon="lets-icons:send-duotone" width="30" height="30" />
