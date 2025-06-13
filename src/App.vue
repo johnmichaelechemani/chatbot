@@ -16,7 +16,7 @@ const textarea = ref(null);
 const errorMessage = ref("");
 
 const isValidImageUrl = (url) =>
-  /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url);
+  /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
 
 const autoResize = () => {
   const el = textarea.value;
@@ -256,7 +256,7 @@ watch(message, autoResize);
                 <input
                   type="url"
                   v-model="newImageURL"
-                  placeholder="Paste image URL (https://...)"
+                  placeholder="Paste image URL (https://...) must end with .jpg, .jpeg, .png, .gif, .webp, .bmp, or .svg"
                   class="w-full text-sm outline-none rounded-full pl-3 py-2"
                 />
               </div>
@@ -288,6 +288,7 @@ watch(message, autoResize);
                 name="message"
                 type="text"
                 ref="textarea"
+                :disabled="showUrlInput"
                 @keydown.enter.exact.prevent="getMessage"
                 @input="autoResize"
                 class="rounded w-full placeholder:text-sm resize-none outline-none text-sm"
