@@ -7,16 +7,28 @@ const message = ref("Hello, Gemini!");
 const isLoading = ref(false);
 const storeConversations = ref([]);
 const typingMessage = ref("");
+const textarea = ref(null);
+
+const autoResize = () => {
+  const el = textarea.value;
+  if (el) {
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }
+};
 
 const getMessage = async () => {
   if (!message.value.trim()) return;
+
   storeConversations.value.push({
     sender: "me",
     text: message.value,
   });
+
   const userInput = message.value;
   message.value = "";
   isLoading.value = true;
+
   try {
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -76,16 +88,6 @@ const getMessage = async () => {
   }
 };
 
-const textarea = ref(null);
-
-const autoResize = () => {
-  const el = textarea.value;
-  if (el) {
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }
-};
-
 onMounted(() => {
   getMessage();
   autoResize;
@@ -124,7 +126,7 @@ watch(message, autoResize);
                     :class="[
                       'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
                       msg.sender === 'me'
-                        ? 'bg-gray-800 text-white rounded-br-none ml-auto'
+                        ? 'bg-gray-800 text-white rounded-br-none text-left ml-auto'
                         : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
                     ]"
                   >
@@ -181,7 +183,14 @@ watch(message, autoResize);
               <div class="flex justify-end items-center px-2 pb-2">
                 <button
                   type="submit"
-                  class="text-gray-800 rounded-full border border-gray-200 p-1"
+                  :class="[
+                    'rounded-full border p-1 transition-colors duration-200',
+                    message.trim()
+                      ? 'bg-gray-800 text-white border-black'
+                      : 'bg-white text-gray-800 border-gray-200',
+                  ]"
+                  :disabled="!message.trim()"
+                  class="disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Icon icon="lets-icons:send-duotone" width="30" height="30" />
                 </button>
