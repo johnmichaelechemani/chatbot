@@ -244,45 +244,58 @@ watch(message, autoResize);
               />
             </div>
 
-            <div v-if="showUrlInput" class="flex gap-1 mr-4 my-4">
-              <div
-                class="ml-4 border rounded-full w-full"
-                :class="[
-                  isValidImageUrl(newImageURL)
-                    ? 'border-gray-200'
-                    : 'border-gray-100',
-                ]"
-              >
-                <input
-                  type="url"
-                  v-model="newImageURL"
-                  placeholder="Paste image URL (https://...) must end with .jpg, .jpeg, .png, .gif, .webp, .bmp, or .svg"
-                  class="w-full text-sm outline-none rounded-full pl-3 py-2"
-                />
+            <div v-if="showUrlInput">
+              <div class="flex gap-1 mr-4 mt-4">
+                <div
+                  class="ml-4 border rounded-full w-full"
+                  :class="[
+                    isValidImageUrl(newImageURL)
+                      ? 'border-gray-200'
+                      : 'border-gray-100',
+                  ]"
+                >
+                  <input
+                    type="url"
+                    v-model="newImageURL"
+                    placeholder="Paste image URL (https://...)"
+                    class="w-full text-sm outline-none rounded-full pl-3 py-2"
+                  />
+                </div>
+                <button
+                  type="button"
+                  @click="addImageUrl"
+                  :class="[
+                    'rounded-full border p-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+                    newImageURL.trim() && isValidImageUrl(newImageURL)
+                      ? 'bg-gray-800 text-white border-black'
+                      : 'bg-white text-gray-800 border-gray-200',
+                  ]"
+                  :disabled="
+                    !newImageURL.trim() || !isValidImageUrl(newImageURL)
+                  "
+                >
+                  <Icon icon="ic:round-add" width="20" height="20" />
+                </button>
+                <button
+                  type="button"
+                  @click="clearImageUrl"
+                  class="bg-white border hover:transition-colors hover:bg-gray-800 hover:text-white border-gray-200 p-2 rounded-full"
+                >
+                  <Icon icon="ic:round-close" width="18" height="18" />
+                </button>
               </div>
-              <button
-                type="button"
-                @click="addImageUrl"
-                :class="[
-                  'rounded-full border p-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-                  newImageURL.trim() && isValidImageUrl(newImageURL)
-                    ? 'bg-gray-800 text-white border-black'
-                    : 'bg-white text-gray-800 border-gray-200',
-                ]"
-                :disabled="!newImageURL.trim() || !isValidImageUrl(newImageURL)"
+              <div
+                class="text-xs text-gray-700 mx-4 my-1 p-1 text-wrap border border-gray-200 rounded-lg"
               >
-                <Icon icon="ic:round-add" width="20" height="20" />
-              </button>
-              <button
-                type="button"
-                @click="clearImageUrl"
-                class="bg-white border hover:transition-colors hover:bg-gray-800 hover:text-white border-gray-200 p-2 rounded-full"
-              >
-                <Icon icon="ic:round-close" width="18" height="18" />
-              </button>
+                Use image in the internet, cause i don't have a storage to store
+                your fvkng image, must end with one of this nigga .jpg, .jpeg,
+                .png, .gif, .webp, .bmp, or .svg
+              </div>
             </div>
-
-            <div class="mt-4 mx-4 flex justify-center gap-2 items-center">
+            <div
+              v-if="!showUrlInput"
+              class="mt-4 mx-4 flex justify-center gap-2 items-center"
+            >
               <textarea
                 v-model="message"
                 name="message"
