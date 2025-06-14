@@ -26,6 +26,25 @@ const autoResize = () => {
   }
 };
 
+const formatText = (text) => {
+  if (!text) return "";
+
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<p>$1</p>")
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="bg-gray-100 px-1 rounded text-sm font-mono">$1</code>'
+    )
+    .replace(/\n/g, "<br>")
+    .replace(
+      /```([\s\S]*?)```/g,
+      '<pre class="bg-gray-100 p-3 rounded-lg overflow-x-auto mt-2 mb-2"><code class="font-mono text-sm">$1</code></pre>'
+    )
+    .replace(/^\d+\.\s(.+)$/gm, '<div class="ml-4 mb-1">• $1</div>')
+    .replace(/^[-*]\s(.+)$/gm, '<div class="ml-4 mb-1">• $1</div>');
+};
+
 const getMessage = async () => {
   if (!message.value.trim() && !imageURL.value) return;
 
@@ -171,7 +190,12 @@ watch(message, autoResize);
                         : 'bg-gray-100 border prose prose-sm dark:prose-invert border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
                     ]"
                   >
-                    {{ msg.text }}
+                    <div
+                      v-if="msg.sender === 'gemini'"
+                      v-html="formatText(msg.text)"
+                      class="formatted-content"
+                    ></div>
+                    <span v-else>{{ msg.text }}</span>
                   </div>
                   <div
                     v-else
@@ -195,7 +219,12 @@ watch(message, autoResize);
                           : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
                       ]"
                     >
-                      {{ msg.text }}
+                      <div
+                        v-if="msg.sender === 'gemini'"
+                        v-html="formatText(msg.text)"
+                        class="formatted-content"
+                      ></div>
+                      <span v-else>{{ msg.text }}</span>
                     </div>
                   </div>
                 </div>
@@ -203,7 +232,10 @@ watch(message, autoResize);
                   <div
                     class="inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none"
                   >
-                    {{ typingMessage }}
+                    <div
+                      v-html="formatText(typingMessage)"
+                      class="formatted-content"
+                    ></div>
                     <span class="animate-pulse">|</span>
                   </div>
                 </div>
@@ -365,5 +397,26 @@ watch(message, autoResize);
   50% {
     opacity: 1;
   }
+}
+
+.formatted-content {
+  line-height: 1.6;
+}
+
+.formatted-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.formatted-content code {
+  font-family: "Courier New", Courier, monospace;
+}
+
+.formatted-content strong {
+  font-weight: 600;
+}
+
+.formatted-content em {
+  font-style: italic;
 }
 </style>
