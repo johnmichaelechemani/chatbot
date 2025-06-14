@@ -38,7 +38,7 @@ const getMessage = async () => {
   const content = [
     {
       type: "text",
-      text: message.value,
+      text: message.value || "What is this image about?",
     },
   ];
 
@@ -168,14 +168,14 @@ watch(message, autoResize);
                       'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
                       msg.sender === 'me'
                         ? 'bg-gray-800 text-white rounded-br-none text-left ml-auto'
-                        : 'bg-gray-100 border border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
+                        : 'bg-gray-100 border prose prose-sm dark:prose-invert border-gray-200/50 text-gray-800 rounded-bl-none mr-auto',
                     ]"
                   >
                     {{ msg.text }}
                   </div>
                   <div
                     v-else
-                    class="inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm"
+                    class="inline-block my-1 rounded-xl max-w-xs break-words text-sm"
                   >
                     <div
                       class="p-0 size-14 border overflow-hidden border-gray-200 rounded-2xl"
@@ -187,6 +187,7 @@ watch(message, autoResize);
                       />
                     </div>
                     <div
+                      v-if="msg.text"
                       :class="[
                         'inline-block px-4 py-2 my-1 rounded-xl max-w-xs break-words text-sm',
                         msg.sender === 'me'
